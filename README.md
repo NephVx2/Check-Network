@@ -173,8 +173,8 @@ Examples:
 The report is split into numbered, framed sections. Each check is one line:
 
 ```
-   ✓  Gateway         │ Latency to 192.168.1.1 : Avg 3.1 ms | Min 2 ms | Max 5 ms
-   !  DNS             │ Wi-Fi - DNS IPv4 : 80.10.246.2
+   ✓  Gateway         │ Latency to xxx.xxx.x.x : Avg 3.1 ms | Min 2 ms | Max 5 ms
+   !  DNS             │ Wi-Fi - DNS IPv4 : xx.xx.xxx.x
    ✗  Speed           │ Download (Cloudflare) : 6 Mbps (4.8 MB in 6.68s)
    ·  NextDNS         │ Installation : Not detected
 ```
@@ -208,7 +208,7 @@ At the end, a green **ANALYSIS COMPLETE** frame shows the three scores as gauges
 ### 3. DNS, NextDNS and leaks
 - **DNS**: resolution time of common domains, and a check that the answers are not hijacked.
 - **NextDNS / DoH Windows / DNS Leak / Bypass DNS / IPv6 Leak**: see [Optional integrations](#optional-integrations-nextdns-block-telemetry). Without NextDNS these lines are simply `INFO`.
-- **DNS Cache**: classifies what is currently in the Windows DNS cache: legitimate infrastructure, known telemetry, blocked domains (resolved to `0.0.0.0` / `127.0.0.1`), suspicious names (algorithmically generated domains, dangerous TLDs, malware patterns).
+- **DNS Cache**: classifies what is currently in the Windows DNS cache: legitimate infrastructure, known telemetry, blocked domains (resolved to `0.0.0.0` / `xxx.x.x.x`), suspicious names (algorithmically generated domains, dangerous TLDs, malware patterns).
 - **Hosts File**: number of null-routed entries in your hosts file, and how many were seen recently in the DNS cache (the cache only shows domains queried since the last flush, so a coverage below 100 % is normal).
 
 ### 4. Network security
