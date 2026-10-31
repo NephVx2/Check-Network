@@ -111,7 +111,7 @@ Nothing is uploaded anywhere. Wi-Fi passwords are **never** read (only the prese
    .\Check-Network.ps1 -SelfTest
    ```
 
-   Executes 14 internal assertions (score state labels, packet-loss calculation, `-Category` filter logic, and more) and prints `Result: 14 / 14 assertions passed` when everything is fine.
+   Executes 22 internal assertions (score state labels, packet-loss calculation, packet-error and discard rating, `-Category` filter logic, and more) and prints `Result: 22 / 22 assertions passed` when everything is fine.
 
 5. Run the full analysis:
 
@@ -197,7 +197,7 @@ At the end, a green **ANALYSIS COMPLETE** frame shows the three scores as gauges
 - **IP / Gateway**: IPv4 / IPv6 addresses, default gateway, DNS servers per interface. A public DNS server that is not a well-known resolver raises a warning, because it may be your ISP's or an unexpected one.
 - **Gateway latency**: 4 probes to your router. Average ≤ 25 ms OK, ≤ 50 ms warning, above = error. **Packet loss** is reported too: 0 % OK, ≤ 25 % warning, above = error. A Wi-Fi link can have a good average latency and still lose packets.
 - **Speed**: download of 5 MB and upload of 2 MB via Cloudflare. Download ≥ 50 Mbps OK, ≥ 10 Mbps warning; upload ≥ 10 Mbps OK, ≥ 2 Mbps warning. A 5 MB file slightly underestimates very fast links.
-- **Performance / Network Stats**: negotiated link speed (≥ 100 Mbps OK) and error rate on the main adapter (0 % OK, < 0.1 % warning).
+- **Performance / Network Stats**: negotiated link speed (≥ 100 Mbps OK), then two separate checks on the main adapter. **Errors** counts real packet errors (corrupted frames): none = OK, below 0.1 % of the traffic = warning, above = error. **Discarded packets** are packets the adapter dropped from its receive/transmit queues. They are shown as information, with the cumulative count, the figure measured during the run and the one measured during the speed test, and only raise a warning if at least 10 % of the packets seen during the run were discarded. They never count as an error.
 - **Routing**: default route(s). Several default routes (for example Wi-Fi and Ethernet at once) are flagged as a warning.
 - **IPv6**: whether IPv6 is enabled and on how many connected interfaces.
 
@@ -209,7 +209,7 @@ At the end, a green **ANALYSIS COMPLETE** frame shows the three scores as gauges
 - **DNS**: resolution time of common domains, and a check that the answers are not hijacked.
 - **NextDNS / DoH Windows / DNS Leak / Bypass DNS / IPv6 Leak**: see [Optional integrations](#optional-integrations-nextdns-block-telemetry). Without NextDNS these lines are simply `INFO`.
 - **DNS Cache**: classifies what is currently in the Windows DNS cache: legitimate infrastructure, known telemetry, blocked domains (resolved to `0.0.0.0` / `xxx.x.x.x`), suspicious names (algorithmically generated domains, dangerous TLDs, malware patterns).
-- **Hosts File**: number of null-routed entries in your hosts file, and how many were seen recently in the DNS cache (the cache only shows domains queried since the last flush, so a coverage below 100 % is normal).
+- **Hosts File**: number of null-routed entries in your hosts file (the standard `127.0.0.1 localhost` line is ignored), and how many were seen recently in the DNS cache (the cache only shows domains queried since the last flush, so a coverage below 100 % is normal).
 
 ### 4. Network security
 - **Firewall / Network Profile**: the three firewall profiles (Domain / Private / Public) must be active; the current network category (Public is the most restrictive).
@@ -276,6 +276,14 @@ Run it from an already open PowerShell window (`.\Check-Network.ps1`) to see any
 <summary>Speed shows a very low value</summary>
 
 The test downloads 5 MB, so it also measures connection start-up and can under-report very fast links. Compare with a browser speed test; if the two disagree by a lot, run it again with nothing else using the connection.
+</details>
+
+<details>
+<summary>"Discarded packets" shows a non-zero count</summary>
+
+A few discarded packets are only informational and do not affect your score. The counter is cumulative since the adapter (or its driver) was last started or reset, and it can rise in bursts under heavy traffic, including the script's own speed test. Read the *this run* and *speed test* figures rather than the total. Real corrupted frames are reported separately on the **Errors** line.
+
+If the discard figure is high (warning), or keeps climbing with almost no traffic, check the network driver: a recently updated driver, especially one installed by a third-party driver updater, can change how a network card behaves. Rolling back to the previous version and measuring again confirms it. A faulty cable would normally show up as packet **errors** and a link negotiated below 1 Gbps instead.
 </details>
 
 <details>
