@@ -111,7 +111,7 @@ Rien n'est envoyé nulle part. Les mots de passe Wi-Fi ne sont **jamais** lus (s
    .\Check-Network.ps1 -SelfTest
    ```
 
-   Exécute 14 assertions internes (libellés des états de score, calcul de la perte de paquets, logique du filtre `-Category`, et plus) et affiche `Result: 14 / 14 assertions passed` quand tout va bien.
+   Exécute 22 assertions internes (libellés des états de score, calcul de la perte de paquets, notation des erreurs et des paquets écartés, logique du filtre `-Category`, et plus) et affiche `Result: 22 / 22 assertions passed` quand tout va bien.
 
 5. Lancer l'analyse complète :
 
@@ -199,7 +199,7 @@ Les libellés de la console sont en anglais (ils sont identiques sur une machine
 - **IP / Gateway** : adresses IPv4 / IPv6, passerelle par défaut, serveurs DNS par interface. Un serveur DNS public absent de la liste des résolveurs connus déclenche une alerte : ce peut être celui de votre fournisseur d'accès ou un serveur inattendu.
 - **Latence de la passerelle** : 4 sondes vers votre routeur. Moyenne ≤ 25 ms OK, ≤ 50 ms alerte, au-delà erreur. La **perte de paquets** est aussi indiquée : 0 % OK, ≤ 25 % alerte, au-delà erreur. Une liaison Wi-Fi peut avoir une bonne latence moyenne tout en perdant des paquets.
 - **Speed** : téléchargement de 5 Mo et envoi de 2 Mo via Cloudflare. Download ≥ 50 Mbps OK, ≥ 10 Mbps alerte ; upload ≥ 10 Mbps OK, ≥ 2 Mbps alerte. Un fichier de 5 Mo sous-estime légèrement les liaisons très rapides.
-- **Performance / Network Stats** : vitesse de liaison négociée (≥ 100 Mbps OK) et taux d'erreurs de la carte principale (0 % OK, < 0,1 % alerte).
+- **Performance / Network Stats** : vitesse de liaison négociée (≥ 100 Mbps OK), puis deux contrôles distincts sur la carte principale. **Errors** compte les vraies erreurs de paquets (trames corrompues) : aucune = OK, moins de 0,1 % du trafic = alerte, au-delà erreur. **Discarded packets** sont les paquets que la carte a écartés de ses files de réception/émission : ils sont affichés à titre d'information, avec le cumul, le chiffre mesuré pendant l'exécution et celui mesuré pendant le test de débit, et ne déclenchent une alerte que si au moins 10 % des paquets vus pendant l'exécution ont été écartés. Ils ne comptent jamais comme une erreur.
 - **Routing** : route(s) par défaut. Plusieurs routes par défaut (par exemple Wi-Fi et Ethernet en même temps) déclenchent une alerte.
 - **IPv6** : IPv6 activé ou non, et sur combien d'interfaces connectées.
 
@@ -211,7 +211,7 @@ Les libellés de la console sont en anglais (ils sont identiques sur une machine
 - **DNS** : temps de résolution de domaines courants, et vérification que les réponses ne sont pas détournées.
 - **NextDNS / DoH Windows / DNS Leak / Bypass DNS / IPv6 Leak** : voir [Intégrations optionnelles](#intégrations-optionnelles-nextdns-block-telemetry). Sans NextDNS, ces lignes sont simplement `INFO`.
 - **DNS Cache** : classe le contenu actuel du cache DNS de Windows : infrastructure légitime, télémétrie connue, domaines bloqués (résolus vers `0.0.0.0` / `xxx.x.x.x`), noms suspects (domaines générés algorithmiquement, extensions dangereuses, motifs de malware).
-- **Hosts File** : nombre d'entrées redirigées vers rien dans votre fichier hosts, et combien ont été vues récemment dans le cache DNS (le cache ne montre que les domaines interrogés depuis le dernier vidage, une couverture inférieure à 100 % est donc normale).
+- **Hosts File** : nombre d'entrées redirigées vers rien dans votre fichier hosts (la ligne standard `127.0.0.1 localhost` est ignorée), et combien ont été vues récemment dans le cache DNS (le cache ne montre que les domaines interrogés depuis le dernier vidage, une couverture inférieure à 100 % est donc normale).
 
 ### 4. Sécurité réseau
 - **Firewall / Network Profile** : les trois profils du pare-feu (Domaine / Privé / Public) doivent être actifs ; catégorie du réseau actuel (Public est la plus restrictive).
@@ -278,6 +278,14 @@ Lancez le script depuis une fenêtre PowerShell déjà ouverte (`.\Check-Network
 <summary>Le débit affiché est très faible</summary>
 
 Le test télécharge 5 Mo : il mesure aussi le démarrage de la connexion et peut sous-estimer une liaison très rapide. Comparez avec un test de débit dans le navigateur ; si l'écart est important, relancez le script sans autre usage de la connexion.
+</details>
+
+<details>
+<summary>« Discarded packets » affiche un nombre non nul</summary>
+
+Quelques paquets écartés sont purement informatifs et n'affectent pas votre score. Le compteur est cumulatif depuis le dernier démarrage ou la dernière réinitialisation de la carte (ou de son pilote), et il peut monter par rafales lors d'un trafic intense, y compris pendant le test de débit du script. Lisez les chiffres *this run* et *speed test* plutôt que le total. Les vraies trames corrompues sont signalées séparément sur la ligne **Errors**.
+
+Si le chiffre est élevé (alerte), ou s'il augmente en continu alors que le trafic est quasi nul, vérifiez le pilote réseau : un pilote récemment mis à jour, surtout installé par un outil tiers de mise à jour de pilotes, peut changer le comportement d'une carte réseau. Revenir à la version précédente puis mesurer à nouveau permet de le confirmer. Un câble défectueux se manifesterait plutôt par des **erreurs** de paquets et une liaison négociée sous 1 Gbps.
 </details>
 
 <details>
